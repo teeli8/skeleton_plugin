@@ -4,13 +4,20 @@ contributions:
     - id: napari-hello.say_hi
       title: Say hello, world!
       python_name: napari_hello:show_hello_message
+    - id: napari-hello.mainalgo
+      title: MainAlgo
+      python_name: napari_hello.mywidget:MainWidget
     - id: napari-hello.widget
       title: Widget
       python_name: napari_hello.mywidget:DebugWidget
     
+    
   widgets:
     - command: napari-hello.say_hi  # note, same as command.id above
-      display_name: Skeleton Finder
-      autogenerate: true
+      display_name: Say Hello
+      autogenerate: True
+    - command: napari-hello.mainalgo
+      display_name: Main
     - command: napari-hello.widget
       display_name: Debug Draw Config
+    

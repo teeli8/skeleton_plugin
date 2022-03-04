@@ -27,7 +27,10 @@ class TimeRecord:
             print(self.__stamp_to_str(stamp))
         print("------ end of records ------")
     
+    def clear(self):
+        self.stamps.clear()
+    
     def __stamp_to_str(self, stamp):
         st,time,delta = stamp
         return "stamp : " + st + ", current : " + str(time) + ", delta : " + str(delta)
-  
+ 

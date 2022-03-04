@@ -28,11 +28,14 @@ class BinaryImage:
         numRow,numCol,colorSize = rawData.shape;
         
         self.data = np.zeros((numRow,numCol))
-        
+        flags = rawData[:,:,0] > thresh
+        self.data[flags] = 1
+        '''
         for r in range(numRow):
             for c in range(numCol):
                 color_value = get_color_value(rawData[r,c])
                 self.data[r,c] = 0 if color_value < thresh else 1
+        '''
     
     def position_is_bright(self, x : float, y : float) -> bool:
         xint = int(x)
@@ -184,13 +187,6 @@ def graph_in_image(vor : Graph, img : BinaryImage) -> Graph:
 
 
 
-'''burning'''
-
-def burn_time(graph : Graph):
-    pass
-
-def r_dist(graph : Graph):
-    pass
 
 """Closest Site Graph"""
 def closest_site_graph(vor : VoronoiDiagram) -> Graph:
@@ -248,10 +244,15 @@ rawData = np.array([
 
 image = BinaryImage(rawData, 200)
 
+
 vertices = get_edge_vertices(image)
 
 vor = VoronoiDiagram(vertices)
+print(vor.vor.points)
+'''
+'''
 print(vor.region_to_site)
+
 print(vor.vert_to_regions)
 print(vor.closest_site(0))
 '''

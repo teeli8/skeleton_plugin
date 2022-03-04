@@ -4,15 +4,16 @@ Created on Mon Feb 21 13:28:18 2022
 
 @author: Yigan
 """
-from graph import Graph, dist2D, prune_graph
+
+from .graph import Graph, dist2D, prune_graph
 from queue import PriorityQueue
 
 class Node:   
     
-    def __init__(self, p, r : float):
+    def __init__(self, p, r : float, ma : float):
         self.point = p
         self.radius = r
-        self.bt = self.radius
+        self.bt = ma
         self.paths = set()
     
     def et(self):
@@ -48,11 +49,11 @@ class Path:
 
 class NodePathGraph:  
     
-    def __init__(self, points, edges, radi):
+    def __init__(self, points, edges, radi, ma):
         self.nodes = list()
         self.paths = list()
         for pi in range(len(points)):
-            self.nodes.append(Node(p = points[pi], r = radi[pi]))
+            self.nodes.append(Node(p = points[pi], r = radi[pi], ma=ma))
         
         for e in edges:
             pid1 = e[0]
@@ -94,15 +95,16 @@ class PItem:
 
 class ETPruningAlgo:
     
-    def __init__(self, g : Graph, radi : float):
+    def __init__(self, g : Graph, radi : list(), ma : float):
         self.graph = g
-        self.npGraph = NodePathGraph(g.points, g.edgeIndex, radi)
+        self.npGraph = NodePathGraph(g.points, g.edgeIndex, radi, ma)
         
     def burn(self):
         #todo
         d_ones = self.npGraph.get_degree_ones()
         pq = PriorityQueue()
         for n in d_ones:
+            n.bt = n.radius
             pq.put(PItem(n.bt,n))
         
         while not pq.empty():
@@ -132,6 +134,8 @@ class ETPruningAlgo:
                 break;
             removed.add(targetN)
             path = targetN.get_one_path()
+            if path is None:
+                continue;
             nextN = targetN.get_next(path)
             nextN.remove_path(path)
             if nextN.is_iso():
