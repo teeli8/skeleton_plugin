@@ -56,16 +56,25 @@ class MainWidget(QWidget):
         self.resetButton.setText("Reset")
         self.resetButton.clicked.connect(MainWidget.reset)
         self.runButton.move(0, 40)
-                
-        self.etSlider = QSlider(Qt.Horizontal, self)
-        self.etSlider.setRange(0,100)
+        
+        s,t = self.__make_slider_label()
+        self.thSlider = s
+        self.thSText = t
+        self.thSlider.valueChanged.connect(self.set_bi_thr)
+        self.thSlider.sliderReleased.connect(self.set_bithr_lift)
+        self.thSlider.move(0,80)
+        self.thSText.move(0,100)
+        
+        s,t = self.__make_slider_label()
+        self.etSlider = s
+        self.etSText = t
         self.etSlider.valueChanged.connect(self.set_thr)
         self.etSlider.sliderReleased.connect(self.set_thr_lift)
-        self.etSlider.move(0,80)
-        self.etSText = QLabel('0', self)
-        self.etSText.setMinimumWidth(80)
-        self.etSText.move(0,100)
+        self.etSlider.move(0,140)
+        self.etSText.move(0,160)
         
+        self.set_bi_thr()
+        self.set_thr()
         
         WidgetManager.inst().add(self)
     
@@ -75,9 +84,15 @@ class MainWidget(QWidget):
     def run():
         WidgetManager.inst().start()
         mainalgo.SkeletonApp.inst().run()
+        
+    def set_bi_thr(self):
+        self.thSText.setText("thr : " + str(self.thSlider.value()))
+    
+    def set_bithr_lift(self):
+        mainalgo.SkeletonApp.inst().reset_bithresh(self.thSlider.value())
     
     def set_thr(self):        
-        self.etSText.setText(str(self.etSlider.value()))
+        self.etSText.setText("et : " + str(self.etSlider.value()))
     
     def set_thr_lift(self):
         mainalgo.SkeletonApp.inst().reset_etthresh(self.etSlider.value())
@@ -85,6 +100,13 @@ class MainWidget(QWidget):
     def reset():
         mainalgo.SkeletonApp.inst().reset_algo()
         Display.current().removeall()
+    
+    def __make_slider_label(self):
+        slider = QSlider(Qt.Horizontal, self)
+        slider.setRange(0,100)
+        sText = QLabel('0', self)
+        sText.setMinimumWidth(80)
+        return slider,sText
     
     
             

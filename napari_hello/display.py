@@ -16,6 +16,7 @@ heatmap = "heatmap"
 burnTime = "burn time"
 erosionT = "ET"
 final = "final"
+angle = "angle"
 
 
 
@@ -45,6 +46,8 @@ class DisplayConfig:
             return self.show_et
         if name == final:
             return self.show_final
+        if name == angle:
+            return True
         return False
         
 

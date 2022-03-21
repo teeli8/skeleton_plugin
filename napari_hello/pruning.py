@@ -130,7 +130,7 @@ class ETPruningAlgo:
         
         while not pq.empty():
             targetN = pq.get().item
-            if targetN.et() > thresh:
+            if targetN.et() >= thresh:
                 break;
             removed.add(targetN)
             path = targetN.get_one_path()

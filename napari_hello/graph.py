@@ -6,6 +6,7 @@ Created on Thu Feb  3 15:36:07 2022
 """
 import math
 import numpy as np
+from scipy.signal import convolve2d
 from scipy.spatial import Voronoi
 from matplotlib import cm
 from matplotlib import colors as cl
@@ -49,10 +50,11 @@ class BinaryImage:
 
 class Graph:
     
-    def __init__(self, point_list : list, edge : list, point_ids : list = None):
+    def __init__(self, point_list : list, edge : list, point_ids : list = None, edge_ids : list = None):
         self.points = point_list
         self.edgeIndex = edge
         self.point_ids = self.__build_point_ids(point_ids)
+        self.edge_ids = self.__build_edges_ids(edge_ids)
     
     def get_edge_cord(self) -> np.ndarray:
         edges = list()
@@ -62,6 +64,13 @@ class Graph:
             if x >= 0 and y >= 0:
                 edges.append([self.points[x],self.points[y]])
         return np.array(edges)
+    
+    def __build_edges_ids(self, eds : list):
+        if eds is None or len(eds) != len(self.edgeIndex):
+            return list(range(0,len(self.edgeIndex)))
+        else:
+            return eds
+        
 
     def __build_point_ids(self, ids : list):
         if ids is None or len(ids) != len(self.points):
@@ -98,6 +107,23 @@ class VoronoiDiagram:
         
         return (cursite,dist) 
     
+    def edge_angle(self, eid : int) -> float:
+        edge = self.vor.ridge_vertices[eid]
+        points = self.vor.ridge_points[eid]
+        p1 = self.vor.points[points[0]]
+        p2 = self.vor.points[points[1]]
+        
+        v1 = self.vor.vertices[edge[0]]
+        v2 = self.vor.vertices[edge[1]]
+        center = np.mean(np.array([v1,v2]), axis = 0)
+        
+        
+        norm1 = (p1-center)/np.linalg.norm(p1-center)
+        norm2 = (p2-center)/np.linalg.norm(p2-center)
+        angle = np.arccos(np.dot(norm1,norm2))
+        return angle
+        
+        
     
     def __build_vert_to_region(self):
         
@@ -124,7 +150,16 @@ class VoronoiDiagram:
 
     
 
-def get_edge_vertices(img : BinaryImage) -> list:
+def get_edge_vertices(img : BinaryImage):
+    
+    filt = np.array([[1,1],[1,1]])
+    con = convolve2d(img.data,filt,mode='same')
+    tf = con >= 4
+    con[tf] = 0
+    ids = np.where(con > 0)
+    idcomp = np.transpose(np.array([ids[0],ids[1]]))
+    return idcomp + [-0.5,-0.5]
+    '''
     s = set()
     numRow, numCol = img.data.shape
     for r in range(numRow):
@@ -142,7 +177,8 @@ def get_edge_vertices(img : BinaryImage) -> list:
                             s.add((vr,c-0.5))
                             s.add((vr,c+0.5)) 
                 
-    return list(s)      
+    return list(s)
+    '''      
 
 def get_voronoi(points : list) -> VoronoiDiagram:
     return VoronoiDiagram(points)
@@ -157,12 +193,15 @@ def prune_graph(graph : Graph, flags : list) -> Graph:
         if flags[i] == 1 :
             prune_index[i] = numPruned
             new_points.append(graph.points[i])
-            new_ids.append(i)
+            new_ids.append(graph.point_ids[i])
         else:
             numPruned += 1
     
     new_edges = list()
-    for e in graph.edgeIndex:
+    edge_ids = list()
+    for j in range(len(graph.edgeIndex)):
+        e = graph.edgeIndex[j]
+    #for e in graph.edgeIndex:
         ex = e[0]
         ey = e[1]
         if ex >= 0 and ey >= 0:            
@@ -170,8 +209,9 @@ def prune_graph(graph : Graph, flags : list) -> Graph:
                 ex -= prune_index[ex]
                 ey -= prune_index[ey]
                 new_edges.append([ex,ey])
+                edge_ids.append(graph.edge_ids[j])
                 
-    return Graph(new_points, new_edges, new_ids)
+    return Graph(new_points, new_edges, new_ids, edge_ids)
 
 '''
 pruned graph
@@ -203,15 +243,22 @@ def closest_site_graph(vor : VoronoiDiagram) -> Graph:
         index += 2
     return Graph(points,edges)
 
-def get_closest_dists(pids : list(), vor : VoronoiDiagram) -> list():
-    result = list()
+def get_closest_dists(pids : list, vor : VoronoiDiagram) -> list:
+    #result = list()
+    result = [vor.closest_site(pid)[1] for pid in pids]
+    '''
     for pid in pids:
         site, dist = vor.closest_site(pid)
         result.append(dist)
+    '''
     return result
 
+def get_angle(eids : list, vor : VoronoiDiagram)-> list:
+    result = [vor.edge_angle(eid) for eid in eids] 
+    return result
+    
 
-def get_color_list(dist : list()) -> list:
+def get_color_list(dist : list) -> list:
     colors = list()    
     data = np.array(dist)
     norm = (data - np.min(data)) / (np.max(data) - np.min(data))
@@ -220,7 +267,7 @@ def get_color_list(dist : list()) -> list:
         colors.append(cl.to_hex(c))
     return colors
 
-def get_edge_color_list(colors : list(), edges:list()) -> list:
+def get_edge_color_list(colors : list, edges:list) -> list:
     col = list()
     for e in edges:
         x = e[0]

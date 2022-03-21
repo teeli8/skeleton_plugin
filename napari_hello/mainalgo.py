@@ -29,8 +29,8 @@ class AlgoStatus:
 class AppStatus:
     
     def __init__(self):
-        self.biThresh = 100
-        self.etThresh = 10
+        self.biThresh = 0
+        self.etThresh = 0
         self.shape = None
         
 
@@ -58,6 +58,11 @@ class SkeletonApp:
         
         self.__runall()
         self.timer.print_records()
+    
+    def reset_bithresh(self, newT : float):
+        self.appStatus.biThresh = newT
+        self.stm.change_state(aps.ThreshState())
+        self.__runall()
     
     def reset_etthresh(self, newT : float):
         self.appStatus.etThresh = newT

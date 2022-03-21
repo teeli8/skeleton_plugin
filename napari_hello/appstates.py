@@ -45,10 +45,14 @@ class ReadState(st.State):
 class ThreshState(st.State):
     
     def execute(self):
-        algo_st().biimg = graph.BinaryImage(algo_st().raw_data, app_st().biThresh)
+        if algo_st().raw_data is None:
+            return
+        algo_st().biimg = graph.BinaryImage(algo_st().raw_data, int(app_st().biThresh/100.0*255))
         tRec().stamp("Threshold")
     
     def get_next(self):
+        if algo_st().raw_data is None: 
+            return None
         return BoundaryState()
 
 class BoundaryState(st.State):
@@ -105,7 +109,8 @@ class BTState(st.State):
         
     
     def get_next(self):
-        return ETPruneState()
+        #return ETPruneState()
+        return AngleState()
     
     def __draw(self, radi, layerName):
         peConfig = ma.get_vorgraph_config(get_size())
@@ -113,7 +118,23 @@ class BTState(st.State):
         peConfig.pointConfig.edge_color = colors
         peConfig.edgeConfig.edge_color = graph.get_edge_color_list(colors, algo_st().graph.edgeIndex)
         ds.Display.current().draw_layer(algo_st().graph, peConfig, layerName)
+
+class AngleState(st.State):
+    
+    def execute(self): 
+        angles = graph.get_angle(algo_st().graph.edge_ids, algo_st().vor)
+        print(angles)
+        tRec().stamp("calc angles")
         
+        peConfig = ma.get_vorgraph_config(get_size())
+        colors = graph.get_color_list(angles)
+        peConfig.pointConfig.edge_color = "blue"
+        peConfig.edgeConfig.edge_color = colors
+        ds.Display.current().draw_layer(algo_st().graph, peConfig, ds.angle)
+        tRec().stamp("draw angles")
+        
+    def get_next(self):
+        return ETPruneState()
 
 class ETPruneState(st.State):
     
@@ -121,7 +142,8 @@ class ETPruneState(st.State):
         if algo_st().algo is None:
             return
         
-        algo_st().final = algo_st().algo.prune(app_st().etThresh)
+        pruneT = app_st().etThresh / 100.0 * max(app_st().shape)
+        algo_st().final = algo_st().algo.prune(pruneT)
         tRec().stamp("ET Prune")
         
         peConfig = ma.get_vorgraph_config(get_size())
@@ -132,3 +154,8 @@ class ETPruneState(st.State):
         
         ds.Display.current().draw_layer(algo_st().final, peConfig, ds.final)
         tRec().stamp("Draw Final")
+        
+
+
+        
+        
