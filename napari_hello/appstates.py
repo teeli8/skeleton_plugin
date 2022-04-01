@@ -8,7 +8,8 @@ from . import graph
 from . import statemachine as st
 from . import mainalgo as ma
 from . import display as ds
-from .pruning import ETPruningAlgo
+from .pruning import BurningAlgo,ETPruningAlgo,AnglePruningAlgo
+import numpy as np
 
 def algo_st():
     return ma.SkeletonApp.inst().algoStatus
@@ -97,7 +98,7 @@ class BTState(st.State):
         closestDist = graph.get_closest_dists(algo_st().graph.point_ids, algo_st().vor) 
         tRec().stamp("Calc Radius")
         
-        algo_st().algo = ETPruningAlgo(algo_st().graph, closestDist, max(app_st().shape))
+        algo_st().algo = BurningAlgo(algo_st().graph, closestDist, max(app_st().shape))
         algo_st().algo.burn()
         tRec().stamp("Burn")
         
@@ -109,8 +110,7 @@ class BTState(st.State):
         
     
     def get_next(self):
-        #return ETPruneState()
-        return AngleState()
+        return PruneChoosingState()
     
     def __draw(self, radi, layerName):
         peConfig = ma.get_vorgraph_config(get_size())
@@ -119,22 +119,29 @@ class BTState(st.State):
         peConfig.edgeConfig.edge_color = graph.get_edge_color_list(colors, algo_st().graph.edgeIndex)
         ds.Display.current().draw_layer(algo_st().graph, peConfig, layerName)
 
+class PruneChoosingState(st.State):
+    
+    def get_next(self):
+        return ETPruneState() if app_st().method == 0 else AngleState()
+
+
 class AngleState(st.State):
     
     def execute(self): 
-        angles = graph.get_angle(algo_st().graph.edge_ids, algo_st().vor)
-        print(angles)
-        tRec().stamp("calc angles")
         
-        peConfig = ma.get_vorgraph_config(get_size())
-        colors = graph.get_color_list(angles)
-        peConfig.pointConfig.edge_color = "blue"
-        peConfig.edgeConfig.edge_color = colors
-        ds.Display.current().draw_layer(algo_st().graph, peConfig, ds.angle)
-        tRec().stamp("draw angles")
+        if algo_st().algo is None:
+            return
+        
+        angles = graph.get_angle(algo_st().graph.edge_ids, algo_st().vor)
+        #print(angles)
+        algo_st().algo.npGraph.set_angles(angles) 
+        tRec().stamp("calc angles")           
+       
         
     def get_next(self):
-        return ETPruneState()
+        return AnglePruneState()
+        
+
 
 class ETPruneState(st.State):
     
@@ -142,8 +149,9 @@ class ETPruneState(st.State):
         if algo_st().algo is None:
             return
         
+        prune_algo = ETPruningAlgo(algo_st().algo.graph, algo_st().algo.npGraph)
         pruneT = app_st().etThresh / 100.0 * max(app_st().shape)
-        algo_st().final = algo_st().algo.prune(pruneT)
+        algo_st().final = prune_algo.prune(pruneT)
         tRec().stamp("ET Prune")
         
         peConfig = ma.get_vorgraph_config(get_size())
@@ -154,6 +162,26 @@ class ETPruneState(st.State):
         
         ds.Display.current().draw_layer(algo_st().final, peConfig, ds.final)
         tRec().stamp("Draw Final")
+
+class AnglePruneState(st.State):
+    
+    def execute(self):
+        if algo_st().algo is None:
+            return
+        
+        pruneT = np.pi * app_st().etThresh / 100.0
+        prune_algo = AnglePruningAlgo(algo_st().algo.graph, algo_st().algo.npGraph)
+        prune_algo.prune(pruneT)
+        
+        peConfig = ma.get_vorgraph_config(get_size())
+        #print(algo_st().algo.npGraph.get_segval())
+        seg_val = algo_st().algo.npGraph.get_segval()
+        colors = graph.get_three_color_list(seg_val)
+        #print(colors)
+        peConfig.pointConfig.edge_color = "blue"
+        peConfig.edgeConfig.edge_color = colors
+        ds.Display.current().draw_layer(algo_st().graph, peConfig, ds.angle)
+        tRec().stamp("draw angles")
         
 
 

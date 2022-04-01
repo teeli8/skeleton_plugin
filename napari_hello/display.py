@@ -30,6 +30,7 @@ class DisplayConfig:
         self.show_bt = False
         self.show_et = False
         self.show_final = True
+        self.show_angle = False
     
     def flag_raise(self, name : str) -> bool:
         if name == boundary:
@@ -47,7 +48,7 @@ class DisplayConfig:
         if name == final:
             return self.show_final
         if name == angle:
-            return True
+            return self.show_angle
         return False
         
 

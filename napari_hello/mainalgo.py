@@ -31,6 +31,7 @@ class AppStatus:
     def __init__(self):
         self.biThresh = 0
         self.etThresh = 0
+        self.method = 0
         self.shape = None
         
 
@@ -66,8 +67,12 @@ class SkeletonApp:
     
     def reset_etthresh(self, newT : float):
         self.appStatus.etThresh = newT
-        self.stm.change_state(aps.ETPruneState())
+        #self.stm.change_state(aps.ETPruneState())
+        self.stm.change_state(aps.PruneChoosingState())
         self.__runall()
+    
+    def reset_method(self, met : float):
+        self.appStatus.method = met
     
     def reset_algo(self):
         self.algoStatus = AlgoStatus()

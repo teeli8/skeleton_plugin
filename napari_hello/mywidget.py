@@ -73,29 +73,36 @@ class MainWidget(QWidget):
         self.etSlider.move(0,140)
         self.etSText.move(0,160)
         
+        self.modeBox = QCheckBox(self)
+        self.modeBox.setText("Use Angle")
+        self.modeBox.move(0, 220)
+        
         self.set_bi_thr()
         self.set_thr()
         
         WidgetManager.inst().add(self)
     
     def sync(self):
-        pass
+        c = self.modeBox.isChecked()
+        mainalgo.SkeletonApp.inst().reset_method(1 if c else 0)
+        
     
     def run():
         WidgetManager.inst().start()
         mainalgo.SkeletonApp.inst().run()
         
     def set_bi_thr(self):
-        self.thSText.setText("thr : " + str(self.thSlider.value()))
+        self.thSText.setText("thr : " + str(self.thSlider.value()) + "%")
     
     def set_bithr_lift(self):
         mainalgo.SkeletonApp.inst().reset_bithresh(self.thSlider.value())
     
     def set_thr(self):        
-        self.etSText.setText("et : " + str(self.etSlider.value()))
+        self.etSText.setText("et : " + str(self.etSlider.value()) + "%")
     
     def set_thr_lift(self):
         mainalgo.SkeletonApp.inst().reset_etthresh(self.etSlider.value())
+    
     
     def reset():
         mainalgo.SkeletonApp.inst().reset_algo()
@@ -129,6 +136,7 @@ class DebugWidget(QWidget):
         self.show_bt_box = self.__make_box("show burn time", 160)
         self.show_et_box = self.__make_box("show et", 200)
         self.show_final_box = self.__make_box("show final", 240)
+        self.show_angle_box = self.__make_box("show angle", 280)
         
         WidgetManager.inst().add(self)
     
@@ -141,6 +149,7 @@ class DebugWidget(QWidget):
         config.show_bt = self.show_bt_box.isChecked()
         config.show_et = self.show_et_box.isChecked()
         config.show_final = self.show_final_box.isChecked()
+        config.show_angle = self.show_angle_box.isChecked()
         Display.current().set_config(config)
     
     def __make_box(self, text, position):

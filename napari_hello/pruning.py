@@ -14,6 +14,7 @@ class Node:
         self.point = p
         self.radius = r
         self.bt = ma
+        self.isCore = True
         self.paths = set()
     
     def et(self):
@@ -45,11 +46,17 @@ class Path:
         self.one = one
         self.other = other
         self.length = l
+        
+        self.theta = 0
+        self.segval = 0
+        self.isCore = True
+        
 
 
 class NodePathGraph:  
     
     def __init__(self, points, edges, radi, ma):
+        self.max = ma
         self.nodes = list()
         self.paths = list()
         for pi in range(len(points)):
@@ -73,16 +80,23 @@ class NodePathGraph:
                 ans.append(node)
         return ans
     
-    def get_ets(self) -> list():
+    def get_ets(self) -> list:
         return [n.et() for n in self.nodes]
 
-    def get_bts(self) -> list():
+    def get_bts(self) -> list:
         return [n.bt for n in self.nodes]
+    
+    def get_segval(self) -> list:
+        return [p.segval for p in self.paths]
     
     def reset_paths(self):
         for path in self.paths:
             path.one.add_path(path)
             path.other.add_path(path)
+    
+    def set_angles(self, angles:list):
+        for pi in range(len(self.paths)):
+            self.paths[pi].theta = angles[pi];
 
 class PItem:
     
@@ -92,10 +106,53 @@ class PItem:
     
     def __lt__(self, other):
         return self.pri < other.pri
-
-class ETPruningAlgo:
     
-    def __init__(self, g : Graph, radi : list(), ma : float):
+
+class BurningAlgo:
+    
+    def __init__(self, g : Graph, radi : list, ma : float):
+        self.graph = g
+        self.npGraph = NodePathGraph(g.points, g.edgeIndex, radi, ma)
+    
+    def burn(self):
+        d_ones = self.npGraph.get_degree_ones()
+        pq = PriorityQueue()
+        for n in d_ones:
+            n.bt = n.radius
+            pq.put(PItem(n.bt,n))
+        
+        while not pq.empty():
+            targetN = pq.get().item
+            path = targetN.get_one_path()
+            if path is None:
+                continue
+            path.isCore = False
+            nextN = targetN.get_next(path)
+            nextN.remove_path(path)
+            if nextN.is_iso():
+                nextN.bt = targetN.bt + path.length
+                pq.put(PItem(nextN.bt, nextN))
+        
+        self.npGraph.reset_paths()
+        
+
+class PruningAlgo:
+    
+    def __init__(self, g : Graph, npg : NodePathGraph):
+        self.graph = g
+        self.npGraph = npg
+    
+    def prune(self, thresh:float)->Graph:
+        #virtual
+        pass
+    
+    
+
+class ETPruningAlgo(PruningAlgo):
+    
+    def __init__(self, g : Graph, npg : NodePathGraph):
+        super().__init__(g, npg)
+        '''
         self.graph = g
         self.npGraph = NodePathGraph(g.points, g.edgeIndex, radi, ma)
         
@@ -116,9 +173,11 @@ class ETPruningAlgo:
             nextN.remove_path(path)
             if nextN.is_iso():
                 nextN.bt = targetN.bt + path.length
+                nextN.isCore = False
                 pq.put(PItem(nextN.bt, nextN))
         
         self.npGraph.reset_paths()
+    '''
     
     def prune(self, thresh : float) -> Graph:
         #todo
@@ -145,6 +204,35 @@ class ETPruningAlgo:
         
         flags = [0 if node in removed else 1 for node in self.npGraph.nodes]
         return prune_graph(self.graph, flags)
+
+
+class AnglePruningAlgo(PruningAlgo):
+    
+    def __init__(self, g : Graph, npg : NodePathGraph):
+        super().__init__(g, npg)
+        
+    def prune(self, thresh:float)->Graph:
+        #todo
+        self.__angle_thresh(thresh)
+        pass
+    
+    def __angle_thresh(self, thresh:float):
+        pos = set()
+        neg = set()
+        core = set()
+        for p in self.npGraph.paths:
+            if p.isCore:
+                p.segval = 10
+                core.add(p)
+            else:
+                p.segval = p.theta - thresh
+                if p.segval >= 0:
+                    pos.add(p)
+                else:
+                    p.segval = 0
+                    neg.add(p)
+        return (pos,neg,core)
+        
   
 '''
 points = [[0,1],[1,2],[2,3],[3,4]]

@@ -120,7 +120,12 @@ class VoronoiDiagram:
         
         norm1 = (p1-center)/np.linalg.norm(p1-center)
         norm2 = (p2-center)/np.linalg.norm(p2-center)
-        angle = np.arccos(np.dot(norm1,norm2))
+        dot = np.dot(norm1,norm2)
+        if dot > 1:
+            dot = 1
+        if dot < -1:
+            dot = -1
+        angle = np.arccos(dot)
         return angle
         
         
@@ -258,14 +263,17 @@ def get_angle(eids : list, vor : VoronoiDiagram)-> list:
     return result
     
 
-def get_color_list(dist : list) -> list:
-    colors = list()    
-    data = np.array(dist)
+def get_color_list(dist : list) -> list:   
+    data = np.array(dist) 
+    if np.max(data) == np.min(data):
+        return ["blue"]*len(dist)
     norm = (data - np.min(data)) / (np.max(data) - np.min(data))
     clist = cm.rainbow(norm)
+    '''
     for c in clist:
         colors.append(cl.to_hex(c))
-    return colors
+    '''
+    return [cl.to_hex(c) for c in clist]
 
 def get_edge_color_list(colors : list, edges:list) -> list:
     col = list()
@@ -276,6 +284,13 @@ def get_edge_color_list(colors : list, edges:list) -> list:
         col2 = cl.to_rgb(colors[y])
         col.append(cl.to_hex((np.array(col1)+np.array(col2))/2))
     return col  
+
+def get_three_color_list(dist : list) -> list:
+    m = max(dist)
+    norm = [1.0 if d >= m else 0.75 if d > 0 else 0 for d in dist]
+    clist = cm.rainbow(norm)
+    return [cl.to_hex(c) for c in clist]
+    
 
 '''
 colors = ["#FFFFFF","#FFFF00","#FF0000", "#000000"] 
