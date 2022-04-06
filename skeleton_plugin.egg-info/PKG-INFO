@@ -1,8 +1,7 @@
 Metadata-Version: 2.1
-Name: napari-hello
+Name: skeleton-plugin
 Version: 0.0.1
 Summary: UNKNOWN
-Home-page: UNKNOWN
 License: UNKNOWN
 Platform: UNKNOWN
 Classifier: Framework :: napari
