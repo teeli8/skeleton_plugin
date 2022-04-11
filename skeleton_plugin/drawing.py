@@ -26,6 +26,8 @@ class LayerConfig:
 class PointEdgeConfig:
     
     def __init__(self, pConfig : LayerConfig, pEdgeConfig : LayerConfig):
+        self.drawpoint = True
+        self.drawedge = True
         self.pointConfig = pConfig
         self.edgeConfig = pEdgeConfig
 

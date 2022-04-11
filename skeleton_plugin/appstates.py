@@ -11,6 +11,8 @@ from . import display as ds
 from .pruning import BurningAlgo,ETPruningAlgo,AnglePruningAlgo
 import numpy as np
 
+debug = False
+
 def algo_st():
     return ma.SkeletonApp.inst().algoStatus
 
@@ -31,11 +33,16 @@ class ReadState(st.State):
     
     def execute(self):
         algo_st().raw_data = self.__read_data()
+        if len(algo_st().raw_data) == 0:
+            ds.Display.current().toast("Read Fail")
+            return
         app_st().shape = algo_st().raw_data.shape
         tRec().stamp("Read Data")
         
     
     def get_next(self):
+        if len(algo_st().raw_data) == 0:
+            return None
         return ThreshState()
 
     def __read_data(self):
@@ -50,11 +57,16 @@ class ThreshState(st.State):
             return
         algo_st().biimg = graph.BinaryImage(algo_st().raw_data, int(app_st().biThresh/100.0*255))
         tRec().stamp("Threshold")
+        ds.Display.current().draw_image_layer(algo_st().biimg.get_drawable())
     
     def get_next(self):
         if algo_st().raw_data is None: 
             return None
-        return BoundaryState()
+        if algo_st().run:
+            return BoundaryState()
+        else:
+            return None
+        #return None
 
 class BoundaryState(st.State):
     
@@ -62,10 +74,11 @@ class BoundaryState(st.State):
         algo_st().boundary = graph.get_edge_vertices(algo_st().biimg)
         tRec().stamp("Find Edge")
         
-        peConfig = ma.get_vorgraph_config(get_size())
-        peConfig.pointConfig.edge_color = "red"
-        ds.Display.current().draw_layer(graph.Graph(algo_st().boundary,[],[]), peConfig, ds.boundary)
-        tRec().stamp("Draw Boundary")
+        if debug:
+            peConfig = ma.get_vorgraph_config(get_size())
+            peConfig.pointConfig.edge_color = "red"
+            ds.Display.current().draw_layer(graph.Graph(algo_st().boundary,[],[]), peConfig, ds.boundary)
+            tRec().stamp("Draw Boundary")
 
     def get_next(self):
         return VorState()
@@ -85,9 +98,10 @@ class PruneState(st.State):
         algo_st().graph = graph.graph_in_image(algo_st().vor.graph, algo_st().biimg)
         tRec().stamp("Prune Voronoi")
         
-        peConfig = ma.get_vorgraph_config(get_size())
-        ds.Display.current().draw_layer(algo_st().vor.graph, peConfig, ds.internalVoronoi)
-        tRec().stamp("Draw Prune Voronoi")
+        if debug:
+            peConfig = ma.get_vorgraph_config(get_size())
+            ds.Display.current().draw_layer(algo_st().vor.graph, peConfig, ds.internalVoronoi)
+            tRec().stamp("Draw Prune Voronoi")
     
     def get_next(self):
         return BTState()
@@ -102,15 +116,17 @@ class BTState(st.State):
         algo_st().algo.burn()
         tRec().stamp("Burn")
         
-        bts = algo_st().algo.npGraph.get_bts()
-        ets = algo_st().algo.npGraph.get_ets()
-        self.__draw(bts, ds.burnTime)
-        self.__draw(ets, ds.erosionT)
-        tRec().stamp("Draw Burn Graph")
+        if debug:
+            bts = algo_st().algo.npGraph.get_bts()
+            ets = algo_st().algo.npGraph.get_ets()
+            self.__draw(bts, ds.burnTime)
+            self.__draw(ets, ds.erosionT)
+            tRec().stamp("Draw Burn Graph")
         
     
     def get_next(self):
-        return PruneChoosingState()
+        #return PruneChoosingState()
+        return ETPruneState()
     
     def __draw(self, radi, layerName):
         peConfig = ma.get_vorgraph_config(get_size())
@@ -152,15 +168,35 @@ class ETPruneState(st.State):
         prune_algo = ETPruningAlgo(algo_st().algo.graph, algo_st().algo.npGraph)
         pruneT = app_st().etThresh / 100.0 * max(app_st().shape)
         algo_st().final = prune_algo.prune(pruneT)
+        algo_st().finalEts = prune_algo.pruned_et
+        
+        joints = algo_st().final.get_joints()
+        jointG = graph.Graph(joints,[])
         tRec().stamp("ET Prune")
         
         peConfig = ma.get_vorgraph_config(get_size())
+        '''
         peConfig.pointConfig.face_color = "red"
         peConfig.pointConfig.edge_color = "red"
-        peConfig.edgeConfig.face_color = "red"
-        peConfig.edgeConfig.edge_color = "red"
+        '''
+        ets = algo_st().algo.npGraph.get_ets()
+        colors = np.array(graph.get_color_list(ets))
+        prune_colors = colors[prune_algo.pruned_flag>0]
+        edge_colors = graph.get_edge_color_list(prune_colors,algo_st().final.edgeIndex)
         
+        peConfig.edgeConfig.face_color = edge_colors
+        peConfig.edgeConfig.edge_color = edge_colors
+        peConfig.drawpoint = False
+        peConfig.drawedge = True      
         ds.Display.current().draw_layer(algo_st().final, peConfig, ds.final)
+        
+        peConfig.pointConfig.face_color = "blue"
+        peConfig.pointConfig.edge_color = "blue"
+        peConfig.drawpoint = True
+        peConfig.drawedge = False
+        ds.Display.current().draw_layer(jointG, peConfig, ds.joint)
+        
+        
         tRec().stamp("Draw Final")
 
 class AnglePruneState(st.State):

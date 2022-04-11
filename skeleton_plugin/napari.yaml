@@ -15,6 +15,4 @@ contributions:
   widgets:
     - command: skeleton-plugin.mainalgo
       display_name: Main
-    - command: skeleton-plugin.widget
-      display_name: Debug Draw Config
     

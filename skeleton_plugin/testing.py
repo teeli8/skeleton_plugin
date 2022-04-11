@@ -40,6 +40,16 @@ print(colors)
 '''
 print(np.linalg.norm(2))
 '''
-print(cm.rainbow(1.0))
+'''
+arr = np.array([[0,1],[1,2],[2,3],[3,4]])
+print(np.count_nonzero(arr == 1))
+'''
+arr = np.array([[0,1],[1,0],[0,1],[1,0]])
+white = np.ones((arr.shape[0],arr.shape[1],4))
+white[arr>0] = [255,255,255,255]
+white[arr<=0] = [0,0,0,0]
+print(white)
+
+
 
 

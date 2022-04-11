@@ -26,6 +26,7 @@ class BinaryImage:
     """
     def __init__(self, rawData : np.ndarray, thresh : int):
         
+        self.rawData = rawData
         numRow,numCol,colorSize = rawData.shape;
         
         self.data = np.zeros((numRow,numCol))
@@ -44,7 +45,15 @@ class BinaryImage:
         numRow,numCol = self.data.shape;
         return xint >= 0 and yint >= 0 and xint < numRow and y < numCol and self.data[xint,yint] == 1
 
-
+    def get_drawable(self) -> np.array:
+        '''
+        white = np.ones((self.data.shape[0],self.data.shape[1],4))
+        white[self.data>0] = [255,255,255,255]
+        white[self.data<=0] = [0,0,0,255]
+        '''
+        draw = np.copy(self.rawData)
+        draw[self.data<=0] = [0,0,0,255] if self.rawData.shape[2] == 4 else [0,0,0]
+        return draw
 
            
 
@@ -64,6 +73,12 @@ class Graph:
             if x >= 0 and y >= 0:
                 edges.append([self.points[x],self.points[y]])
         return np.array(edges)
+    
+    def get_joints(self) -> np.ndarray:
+        pids = np.array(range(len(self.points)));
+        ids = filter(lambda p:np.count_nonzero(self.edgeIndex==p)>2, pids)        
+        return np.array([self.points[i] for i in ids])
+        
     
     def __build_edges_ids(self, eds : list):
         if eds is None or len(eds) != len(self.edgeIndex):

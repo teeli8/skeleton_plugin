@@ -6,6 +6,7 @@ Created on Wed Feb  9 15:46:23 2022
 """
 
 import napari
+from napari.utils.notifications import show_info
 from . import graph
 from . import drawing
 
@@ -17,6 +18,7 @@ burnTime = "burn time"
 erosionT = "ET"
 final = "final"
 angle = "angle"
+joint = "joint"
 
 
 
@@ -49,6 +51,8 @@ class DisplayConfig:
             return self.show_final
         if name == angle:
             return self.show_angle
+        if name == joint:
+            return True
         return False
         
 
@@ -65,16 +69,24 @@ class Display:
     def __init__(self, viewer : napari.Viewer):
         self.viewer = viewer
         self.layers = list()
+        self.image_layer = None
         self.config = DisplayConfig()
     
     def set_config(self, con : DisplayConfig):
         self.config = con
+    
+    def draw_image_layer(self, data):
+        if(self.image_layer == None):
+            self.image_layer = napari.layers.Image(name = "Image",data = data)
+            self.viewer.add_layer(self.image_layer)
+        else:
+            self.image_layer.data = data
 
     def draw_layer(self, g : graph.Graph, config : drawing.PointEdgeConfig, name : str) :
         if self.config.flag_raise(name): 
             graph_layer = self.find(name)
             if graph_layer is None:
-                graph_layer = GraphLayer.create(name)
+                graph_layer = GraphLayer.create(name,config)
             graph_layer.draw(g,config)
             self.layers.append(graph_layer)
     
@@ -102,19 +114,24 @@ class Display:
         for l in self.layers:
             l.remove()
         self.layers.clear()
-
+        if self.image_layer in self.viewer.layers:
+            self.viewer.layers.remove(self.image_layer)
+        self.image_layer = None
     
+    def toast(self, msg : str):
+        show_info(msg)
+   
     
 
 class GraphLayer:
     
-    def __init__(self, name : str, pl : napari.layers.Points, el : napari.layers.Shapes):
+    def __init__(self, name : str = "", pl : napari.layers.Points = None, el : napari.layers.Shapes = None):
         self.name = name
         self.pointLayer = pl
         self.edgeLayer = el
     
     def show(self, isShow : bool):
-        self.pointLayer.visible = isShow
+        #self.pointLayer.visible = isShow
         self.edgeLayer.visible = isShow
     
     def remove(self):
@@ -128,25 +145,26 @@ class GraphLayer:
         pc = config.pointConfig
         ec = config.edgeConfig
         
+        if self.pointLayer != None:         
+            self.pointLayer.data = g.points
+            self.pointLayer.size = pc.size
+            if self.pointLayer.visible:
+                self.pointLayer.opacity = pc.opacity
+                self.pointLayer.face_color = pc.face_color
+                self.pointLayer.edge_color = pc.edge_color
+            self.pointLayer.selected_data = set()
         
-        self.pointLayer.data = g.points
-        self.pointLayer.size = pc.size
-        if self.pointLayer.visible:
-            self.pointLayer.opacity = pc.opacity
-            self.pointLayer.face_color = pc.face_color
-            self.pointLayer.edge_color = pc.edge_color
-        self.pointLayer.selected_data = set()
-        
-        self.edgeLayer.shape_type = 'line'
-        self.edgeLayer.data = g.get_edge_cord()       
-        self.edgeLayer.edge_width = ec.size
-        if self.edgeLayer.visible:
-            self.edgeLayer.edge_color = ec.edge_color
-            self.edgeLayer.face_color = ec.face_color
-        self.edgeLayer.selected_data = set()
+        if self.edgeLayer != None:
+            self.edgeLayer.shape_type = 'line'
+            self.edgeLayer.data = g.get_edge_cord()       
+            self.edgeLayer.edge_width = ec.size
+            if self.edgeLayer.visible:
+                self.edgeLayer.edge_color = ec.edge_color
+                self.edgeLayer.face_color = ec.face_color
+            self.edgeLayer.selected_data = set()
         #self.pointLayer.refresh()
     
-    def create(name : str):
+    def create(name : str, config : drawing.PointEdgeConfig):
         viewer = Display.current().viewer
         '''
         pc = config.pointConfig
@@ -161,11 +179,14 @@ class GraphLayer:
         viewer.add_layer(shapeLayer)
         '''
         pname = name + " : " + "points"
-        ename = name + " : " + "edges"
-        pointLayer = napari.layers.Points(name = pname)
-        shapeLayer = napari.layers.Shapes(name = ename)
-        viewer.add_layer(pointLayer)
-        viewer.add_layer(shapeLayer)
+        ename = name + " : " + "edges"            
+        pointLayer = napari.layers.Points(name = pname) if config.drawpoint else None
+        shapeLayer = napari.layers.Shapes(name = ename) if config.drawedge else None
+        if pointLayer != None: 
+            viewer.add_layer(pointLayer)
+        if shapeLayer != None:
+            viewer.add_layer(shapeLayer)
         return GraphLayer(name = name, pl = pointLayer, el = shapeLayer)
+        #return GraphLayer(name = name, el = shapeLayer)
 
 

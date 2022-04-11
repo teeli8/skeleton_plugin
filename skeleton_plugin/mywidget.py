@@ -73,9 +73,10 @@ class MainWidget(QWidget):
         self.etSlider.move(0,140)
         self.etSText.move(0,160)
         
-        self.modeBox = QCheckBox(self)
-        self.modeBox.setText("Use Angle")
-        self.modeBox.move(0, 220)
+        self.saveButton = QPushButton(self)
+        self.saveButton.setText("Save To File")
+        self.saveButton.clicked.connect(self.save_to_file)
+        self.saveButton.move(0, 200)
         
         self.set_bi_thr()
         self.set_thr()
@@ -83,9 +84,11 @@ class MainWidget(QWidget):
         WidgetManager.inst().add(self)
     
     def sync(self):
+        '''
         c = self.modeBox.isChecked()
         mainalgo.SkeletonApp.inst().reset_method(1 if c else 0)
-        
+        '''
+        pass
     
     def run():
         WidgetManager.inst().start()
@@ -103,6 +106,9 @@ class MainWidget(QWidget):
     def set_thr_lift(self):
         mainalgo.SkeletonApp.inst().reset_etthresh(self.etSlider.value())
     
+    def save_to_file(self):
+        mainalgo.SkeletonApp.inst().save_to_file()
+        
     
     def reset():
         mainalgo.SkeletonApp.inst().reset_algo()

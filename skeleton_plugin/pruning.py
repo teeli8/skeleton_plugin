@@ -4,7 +4,7 @@ Created on Mon Feb 21 13:28:18 2022
 
 @author: Yigan
 """
-
+import numpy as np
 from .graph import Graph, dist2D, prune_graph
 from queue import PriorityQueue
 
@@ -38,6 +38,9 @@ class Node:
 
     def get_next(self, path):
         return path.other if path.one == self else path.one
+    
+    def path_count(self):
+        return len(self.paths)
     
 
 class Path:
@@ -97,6 +100,7 @@ class NodePathGraph:
     def set_angles(self, angles:list):
         for pi in range(len(self.paths)):
             self.paths[pi].theta = angles[pi];
+    
 
 class PItem:
     
@@ -152,6 +156,8 @@ class ETPruningAlgo(PruningAlgo):
     
     def __init__(self, g : Graph, npg : NodePathGraph):
         super().__init__(g, npg)
+        self.pruned_et = None
+        self.pruned_flag = None
         '''
         self.graph = g
         self.npGraph = NodePathGraph(g.points, g.edgeIndex, radi, ma)
@@ -203,6 +209,9 @@ class ETPruningAlgo(PruningAlgo):
         self.npGraph.reset_paths()
         
         flags = [0 if node in removed else 1 for node in self.npGraph.nodes]
+        ets = np.array(self.npGraph.get_ets())
+        self.pruned_flag = np.array(flags)
+        self.pruned_et = ets[self.pruned_flag>0]
         return prune_graph(self.graph, flags)
 
 

@@ -13,18 +13,22 @@ from .timer import TimeRecord
 from .pruning import ETPruningAlgo
 from .statemachine import StateMachine
 from . import appstates as aps
+from . import graphprinter as gp
 
 
 class AlgoStatus:
     
     def __init__(self):
-        self.raw_data = None
+        self.run = False
+        self.raw_data = []
         self.biimg = None
         self.boundary = None
         self.vor = None
         self.graph = None
         self.algo = None
         self.final = None
+        self.finalEts = None
+        self.joint = None
 
 class AppStatus:
     
@@ -55,14 +59,21 @@ class SkeletonApp:
     def run(self):
         self.timer.clear()
         self.timer.stamp("Start")
-        self.stm.change_state(aps.ReadState())
+        self.algoStatus.run = True
+        if self.algoStatus.biimg == None:
+            self.stm.change_state(aps.ReadState())
+        else:
+            self.stm.change_state(aps.BoundaryState())
         
         self.__runall()
         self.timer.print_records()
     
     def reset_bithresh(self, newT : float):
         self.appStatus.biThresh = newT
-        self.stm.change_state(aps.ThreshState())
+        if len(self.algoStatus.raw_data)==0:
+            self.stm.change_state(aps.ReadState())
+        else:          
+            self.stm.change_state(aps.ThreshState())    
         self.__runall()
     
     def reset_etthresh(self, newT : float):
@@ -76,6 +87,14 @@ class SkeletonApp:
     
     def reset_algo(self):
         self.algoStatus = AlgoStatus()
+    
+    def save_to_file(self):
+        if self.algoStatus.final != None:
+            pt = gp.GraphPrinter()
+            pt.set_graph(self.algoStatus.final)
+            pt.set_et(self.algoStatus.finalEts)
+            pt.write()
+            display.Display.current().toast("Success")
         
         
     def __runall(self):
@@ -219,6 +238,7 @@ def getSize(shape) -> float:
 
 def getThresh() -> float:
     return SkeletonApp.etThresh
+    
 
 '''
 def draw_graph(viewer : napari.Viewer, g : graph.Graph, config : drawing.PointEdgeConfig) :
