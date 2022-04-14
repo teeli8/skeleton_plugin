@@ -1,17 +1,27 @@
 # -*- coding: utf-8 -*-
 from . import graph
 #import graph
+import numpy as np
 from tkinter import Tk,filedialog 
-from tabulate import tabulate
+#from tabulate import tabulate
+from plyfile import PlyData, PlyElement
 
 class GraphFormatString:
     
     def __init__(self, g : graph.Graph, et:list):
         #vertices (id, position, et)
-        self.vertices = [[i,g.points[i],et[i]] for i in range(len(g.points))]
+        self.vertices = np.array([(np.round(g.points[i],2),round(et[i],2)) for i in range(len(g.points))],dtype=[('coordinates','f4', (2,)),('thickness', 'f4')])
+        #print(self.vertices)
         #edges (id, vertices)
-        self.edges = [[i,g.edgeIndex[i]] for i in range(len(g.edgeIndex))]
-    
+        #self.edges = np.array([(g.edgeIndex[i][0],g.edgeIndex[i][1]) for i in range(len(g.edgeIndex))],dtype = [('vertex 1','i4'),('vertex 2','i4')])
+        self.edges = np.array([tuple(e) for e in g.edgeIndex],dtype = [('vertex1','i4'),('vertex2','i4')])
+        #self.edges = np.array(g.edgeIndex)
+        
+    def toPly(self) -> PlyData:
+        vertexEle = PlyElement.describe(self.vertices,'Vertices')
+        edgeEle = PlyElement.describe(self.edges, 'Edges')
+        return PlyData([vertexEle,edgeEle],text=True)
+'''    
     def toLines(self) -> str :
         lines = list()
 
@@ -26,6 +36,8 @@ class GraphFormatString:
         string = string.join(lines)
         
         return string
+'''    
+    
 
 class GraphPrinter:
     
@@ -36,22 +48,26 @@ class GraphPrinter:
     def set_graph(self, g : graph.Graph):
         self.graph = g
     
-    def set_et(self, e : list):
+    def set_et(self, e):
         self.et = e
         
     
     def write(self):
         fs = GraphFormatString(self.graph, self.et)
-        lines = fs.toLines()
+        #lines = fs.toLines()
+        
+        ply = fs.toPly()
         root = Tk()
         root.withdraw()
-        root.filename =  filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = [("text","*.txt")])
-        f = open(root.filename,"w")
-        f.write(lines)
+        root.filename =  filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = [("PLY","*.ply")])
+        f = open(root.filename,"wb")
+        #f.write(lines)
+        ply.write(f)
         f.close()
         
+        
 '''
-points = [[0,1],[1,2],[2,3],[3,4]]
+points = [[0.010101,1.1010011],[1.121212,2.123232],[2.00101,3.11010],[3.00000,4.00300]]
 edges = [[0,1],[0,2],[0,3],[1,3],[2,3],[1,2]]
 flags = [0,1,1,0]
 
