@@ -23,7 +23,7 @@ def tRec():
     return ma.SkeletonApp.inst().timer
 
 def get_size() -> float:
-    refer = 128
+    refer = 256
     x, y, c = app_st().shape
     m = float(max([x,y,c]))
     return m / refer
@@ -34,7 +34,7 @@ class ReadState(st.State):
     def execute(self):
         algo_st().raw_data = self.__read_data()
         if len(algo_st().raw_data) == 0:
-            ds.Display.current().toast("Read Fail")
+            #ds.Display.current().toast("Read Fail")
             return
         app_st().shape = algo_st().raw_data.shape
         tRec().stamp("Read Data")
@@ -47,7 +47,11 @@ class ReadState(st.State):
 
     def __read_data(self):
         viewer = ds.Display.current().viewer
-        layer = viewer.layers[0]
+        sl = viewer.layers.selection
+        if len(sl) != 1:
+            ds.Display.current().toast("Please select one image layer")
+            return []
+        layer = sl.pop()
         return layer.data_raw
 
 class ThreshState(st.State):
@@ -179,8 +183,8 @@ class ETPruneState(st.State):
         peConfig.pointConfig.face_color = "red"
         peConfig.pointConfig.edge_color = "red"
         '''
-        ets = algo_st().algo.npGraph.get_ets()
-        colors = np.array(graph.get_color_list(ets))
+        rds = algo_st().algo.npGraph.get_rad()
+        colors = np.array(graph.get_color_list(rds))
         prune_colors = colors[prune_algo.pruned_flag>0]
         edge_colors = graph.get_edge_color_list(prune_colors,algo_st().final.edgeIndex)
         
@@ -190,8 +194,9 @@ class ETPruneState(st.State):
         peConfig.drawedge = True      
         ds.Display.current().draw_layer(algo_st().final, peConfig, ds.final)
         
-        peConfig.pointConfig.face_color = "blue"
-        peConfig.pointConfig.edge_color = "blue"
+        peConfig.pointConfig.face_color = "white"
+        peConfig.pointConfig.edge_color = "black"
+        peConfig.pointConfig.size = peConfig.pointConfig.size * 2
         peConfig.drawpoint = True
         peConfig.drawedge = False
         ds.Display.current().draw_layer(jointG, peConfig, ds.joint)

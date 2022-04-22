@@ -47,36 +47,38 @@ class MainWidget(QWidget):
         super().__init__(parent)
         self.name = main_widget
         
-        self.runButton = QPushButton(self)
-        self.runButton.setText("Run")
-        self.runButton.clicked.connect(MainWidget.run)
-        self.runButton.move(0, 0)
-        
-        self.resetButton = QPushButton(self)
-        self.resetButton.setText("Reset")
-        self.resetButton.clicked.connect(MainWidget.reset)
-        self.runButton.move(0, 40)
+        left = 10
         
         s,t = self.__make_slider_label()
         self.thSlider = s
         self.thSText = t
         self.thSlider.valueChanged.connect(self.set_bi_thr)
         self.thSlider.sliderReleased.connect(self.set_bithr_lift)
-        self.thSlider.move(0,80)
-        self.thSText.move(0,100)
+        self.thSlider.move(left,10)
+        self.thSText.move(left,30)
         
         s,t = self.__make_slider_label()
         self.etSlider = s
         self.etSText = t
         self.etSlider.valueChanged.connect(self.set_thr)
         self.etSlider.sliderReleased.connect(self.set_thr_lift)
-        self.etSlider.move(0,140)
-        self.etSText.move(0,160)
+        self.etSlider.move(left,70)
+        self.etSText.move(left,90)
+        
+        self.runButton = QPushButton(self)
+        self.runButton.setText("Find Skeleton")
+        self.runButton.clicked.connect(MainWidget.run)
+        self.runButton.move(left, 120)
         
         self.saveButton = QPushButton(self)
         self.saveButton.setText("Save To File")
         self.saveButton.clicked.connect(self.save_to_file)
-        self.saveButton.move(0, 200)
+        self.saveButton.move(left, 150)
+        
+        self.resetButton = QPushButton(self)
+        self.resetButton.setText("Reset")
+        self.resetButton.clicked.connect(MainWidget.reset)
+        self.resetButton.move(left, 170)
         
         self.set_bi_thr()
         self.set_thr()
@@ -95,13 +97,13 @@ class MainWidget(QWidget):
         mainalgo.SkeletonApp.inst().run()
         
     def set_bi_thr(self):
-        self.thSText.setText("thr : " + str(self.thSlider.value()) + "%")
+        self.thSText.setText("segmentation parameter : " + str(self.thSlider.value()) + "%")
     
     def set_bithr_lift(self):
         mainalgo.SkeletonApp.inst().reset_bithresh(self.thSlider.value())
     
     def set_thr(self):        
-        self.etSText.setText("et : " + str(self.etSlider.value()) + "%")
+        self.etSText.setText("pruning parameter : " + str(self.etSlider.value()) + "%")
     
     def set_thr_lift(self):
         mainalgo.SkeletonApp.inst().reset_etthresh(self.etSlider.value())
@@ -117,6 +119,7 @@ class MainWidget(QWidget):
     def __make_slider_label(self):
         slider = QSlider(Qt.Horizontal, self)
         slider.setRange(0,100)
+        slider.resize(100,20)
         sText = QLabel('0', self)
         sText.setMinimumWidth(80)
         return slider,sText

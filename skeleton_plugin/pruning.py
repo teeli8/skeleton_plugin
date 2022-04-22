@@ -83,6 +83,9 @@ class NodePathGraph:
                 ans.append(node)
         return ans
     
+    def get_rad(self) -> list:
+        return [n.radius for n in self.nodes]
+    
     def get_ets(self) -> list:
         return [n.et() for n in self.nodes]
 

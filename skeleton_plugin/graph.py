@@ -53,6 +53,7 @@ class BinaryImage:
         '''
         draw = np.copy(self.rawData)
         draw[self.data<=0] = [0,0,0,255] if self.rawData.shape[2] == 4 else [0,0,0]
+        draw[self.data>0] = [255,255,255,255] if self.rawData.shape[2] == 4 else [255,255,255]
         return draw
 
            
