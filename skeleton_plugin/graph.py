@@ -77,9 +77,12 @@ class Graph:
     
     def get_joints(self) -> np.ndarray:
         pids = np.array(range(len(self.points)));
-        ids = filter(lambda p:np.count_nonzero(self.edgeIndex==p)>2, pids)        
+        ids = filter(lambda p:self.__is_joint(p), pids)        
         return np.array([self.points[i] for i in ids])
-        
+    
+    def __is_joint(self, p):
+        val = np.count_nonzero(self.edgeIndex==p)
+        return val == 1 or val > 2
     
     def __build_edges_ids(self, eds : list):
         if eds is None or len(eds) != len(self.edgeIndex):

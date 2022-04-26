@@ -6,7 +6,7 @@ Created on Mon Feb 14 15:32:30 2022
 """
 import napari
 #import sys
-from qtpy.QtWidgets import QWidget, QCheckBox, QPushButton,QSlider,QLabel
+from qtpy.QtWidgets import QWidget, QCheckBox, QPushButton,QSlider,QLabel,QLineEdit
 from PyQt5.QtCore import Qt
 from .display import Display
 from . import mainalgo
@@ -57,6 +57,7 @@ class MainWidget(QWidget):
         self.thSlider.move(left,10)
         self.thSText.move(left,30)
         
+        self.etValue = 0
         s,t = self.__make_slider_label()
         self.etSlider = s
         self.etSText = t
@@ -64,6 +65,11 @@ class MainWidget(QWidget):
         self.etSlider.sliderReleased.connect(self.set_thr_lift)
         self.etSlider.move(left,70)
         self.etSText.move(left,90)
+        
+        self.etInput = QLineEdit(self)
+        self.etInput.move(left+110,90)
+        self.etInput.resize(40,20)
+        self.etInput.returnPressed.connect(self.widget_changed)
         
         self.runButton = QPushButton(self)
         self.runButton.setText("Find Skeleton")
@@ -102,14 +108,34 @@ class MainWidget(QWidget):
     def set_bithr_lift(self):
         mainalgo.SkeletonApp.inst().reset_bithresh(self.thSlider.value())
     
-    def set_thr(self):        
-        self.etSText.setText("pruning parameter : " + str(self.etSlider.value()) + "%")
+    def set_thr(self):  
+        self.etValue = self.etSlider.value()
+        self.etSText.setText("pruning parameter : " + str(self.etValue) + "%")
+        self.etInput.setText(str(self.etValue))
     
     def set_thr_lift(self):
-        mainalgo.SkeletonApp.inst().reset_etthresh(self.etSlider.value())
+        mainalgo.SkeletonApp.inst().reset_etthresh(self.etValue)
     
     def save_to_file(self):
         mainalgo.SkeletonApp.inst().save_to_file()
+     
+    def widget_changed(self):
+        txt = self.etInput.text()
+        if txt == "":
+            self.etSlider.setValue(0)
+            return
+        try:
+           num = float(txt)
+           if num >= 0 and num <= 100:
+               self.etSlider.setValue(num)
+               self.etValue = num
+               self.set_thr_lift()
+           else:
+               self.etInput.undo()
+        except ValueError:
+            self.etInput.undo()
+            
+        
         
     
     def reset():
@@ -119,7 +145,7 @@ class MainWidget(QWidget):
     def __make_slider_label(self):
         slider = QSlider(Qt.Horizontal, self)
         slider.setRange(0,100)
-        slider.resize(100,20)
+        slider.resize(150,20)
         sText = QLabel('0', self)
         sText.setMinimumWidth(80)
         return slider,sText
