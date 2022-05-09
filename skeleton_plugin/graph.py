@@ -76,8 +76,14 @@ class Graph:
         return np.array(edges)
     
     def get_joints(self) -> np.ndarray:
+        
+        
+        
         pids = np.array(range(len(self.points)));
-        ids = filter(lambda p:self.__is_joint(p), pids)        
+        #ids = filter(lambda p:self.__is_joint(p), pids)   
+        unique, counts = np.unique(self.edgeIndex, return_counts=True)
+        d = dict(zip(unique, counts))
+        ids = filter(lambda p:p not in d or d[p] != 2, pids)
         return np.array([self.points[i] for i in ids])
     
     def __is_joint(self, p):
@@ -202,7 +208,7 @@ def get_edge_vertices(img : BinaryImage):
                             s.add((vr,c+0.5)) 
                 
     return list(s)
-    '''      
+    '''     
 
 def get_voronoi(points : list) -> VoronoiDiagram:
     return VoronoiDiagram(points)

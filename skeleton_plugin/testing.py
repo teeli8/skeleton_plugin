@@ -52,6 +52,10 @@ white[arr>0] = [255,255,255,255]
 white[arr<=0] = [0,0,0,0]
 print(white)
 '''
+arr = np.array([[2,1],[1,0],[1,3],[1,0]])
+unique, counts = np.unique(arr, return_counts=True)
+d = dict(zip(unique, counts))
+print(d)
 
 
 

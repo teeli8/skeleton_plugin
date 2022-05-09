@@ -172,11 +172,12 @@ class ETPruneState(st.State):
         prune_algo = ETPruningAlgo(algo_st().algo.graph, algo_st().algo.npGraph)
         pruneT = app_st().etThresh / 100.0 * max(app_st().shape)
         algo_st().final = prune_algo.prune(pruneT)
+        tRec().stamp("ET Prune")
         algo_st().finalEts = prune_algo.pruned_et
         
         joints = algo_st().final.get_joints()
         jointG = graph.Graph(joints,[])
-        tRec().stamp("ET Prune")
+        tRec().stamp("find joints")
         
         peConfig = ma.get_vorgraph_config(get_size())
         '''

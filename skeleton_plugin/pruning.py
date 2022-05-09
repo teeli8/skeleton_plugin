@@ -200,6 +200,8 @@ class ETPruningAlgo(PruningAlgo):
             targetN = pq.get().item
             if targetN.et() >= thresh:
                 break;
+            if not targetN.is_iso():
+                continue;
             removed.add(targetN)
             path = targetN.get_one_path()
             if path is None:
