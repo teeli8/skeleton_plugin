@@ -60,10 +60,14 @@ class GraphPrinter:
         root = Tk()
         root.withdraw()
         root.filename =  filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = [("PLY","*.ply")])
-        f = open(root.filename,"wb")
-        #f.write(lines)
-        ply.write(f)
-        f.close()
+        try:
+            f = open(root.filename,"wb")
+            #f.write(lines)
+            ply.write(f)
+            f.close()
+            return True
+        except:
+            return False
         
         
 '''

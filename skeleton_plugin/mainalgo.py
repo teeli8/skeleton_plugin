@@ -93,8 +93,11 @@ class SkeletonApp:
             pt = gp.GraphPrinter()
             pt.set_graph(self.algoStatus.final)
             pt.set_et(self.algoStatus.finalEts)
-            pt.write()
-            display.Display.current().toast("Success")
+            success = pt.write()
+            toas = 'Success' if success else 'Write Canceled'
+            display.Display.current().toast(toas)
+        else :
+            display.Display.current().toast("No Skeleton Computed")
         
         
     def __runall(self):
@@ -103,7 +106,7 @@ class SkeletonApp:
             self.stm.to_next()
     
     
-
+#Obsolete
 def run():
     # ta.test_boundary_edge([]);
     
@@ -201,7 +204,7 @@ def run():
     
     
 
-# TODO
+
 # step 1 ：Find image layer
 # step 2 : Read raw data
 # step 3 : Do something
