@@ -18,8 +18,10 @@ Adjust parameters and find skeleton.
 
 Re-adjusting parameters after computing a skeleton is also supported.
 
+Be sure to use the Reset button after finishing the computation for an image
+
 ## License
-The plugin is distributed under the terms of   license.
+The plugin is distributed under the terms of BSD-3 license.
 
 ## Issues
 If you encounter any issues, please file an issue along with a detailed description
